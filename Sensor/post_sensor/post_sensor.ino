@@ -20,7 +20,7 @@ const char *password = "TheBestPasswordEverCreated";
 const String host = "http://192.168.43.237/data";
 
 String urlToPing="";
-double temperature=0;
+double temperature=15;
 const double smoothingFactor=0.1;//x% of the new value, 1-x% of the last computed value
 
 void setup()
@@ -56,7 +56,7 @@ void loop()
 {
     //WIFI
     ArduinoOTA.handle();
-    HTTPClient http;
+    
 
     //SENSOR
     sensors_event_t event;
@@ -67,19 +67,24 @@ void loop()
     Serial.print(",  New: " + String(event.temperature));
     Serial.println(",  Result: " + String(temperature));
     
-    if (isnan(event.temperature)) {
+    if (isnan(temperature)) {
       Serial.println(F("Error reading temperature!"));
     }
     else {
       //SENDING THE TEMPERATURE
       urlToPing=host + "?temp=" + String(temperature);
-      http.begin(urlToPing.c_str());
-      http.addHeader("Content-Type", "text/plain");
-      
-      Serial.print(http.GET());
+      Serial.print(sendGet(urlToPing));
       Serial.println("   " + urlToPing);
-      http.end();  //Close connection
     }
 
     delay(1000);
+}
+
+int sendGet(String uri)
+{
+  HTTPClient http;
+  http.begin(uri.c_str());
+  http.addHeader("Content-Type", "text/plain");
+  http.end();
+  return http.GET();
 }
