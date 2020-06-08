@@ -20,8 +20,9 @@ const char *password = "TheBestPasswordEverCreated";
 const String host = "http://192.168.43.237/data";
 
 String urlToPing="";
-double temperature=15;
-const double smoothingFactor=0.1;//x% of the new value, 1-x% of the last computed value
+double temperature=0;
+double humidity=0;
+const double smoothingFactor=0.5;//x% of the new value, 1-x% of the last computed value
 
 void setup()
 {
@@ -48,7 +49,6 @@ void setup()
     Serial.println("OTA ready");
 
     dht.begin();
-    sensor_t sensor;
     Serial.println("Sensor ready");
 }
 
@@ -61,23 +61,24 @@ void loop()
     //SENSOR
     sensors_event_t event;
     dht.temperature().getEvent(&event);
+    temperature = smoothingFactor * event.temperature + (1-smoothingFactor) * temperature;
     
-    Serial.print("Old " + String(temperature));
-    temperature=smoothingFactor * event.temperature + (1-smoothingFactor) * temperature;
-    Serial.print(",  New: " + String(event.temperature));
-    Serial.println(",  Result: " + String(temperature));
+    dht.humidity().getEvent(&event);
+    humidity = smoothingFactor * event.relative_humidity + (1-smoothingFactor) * humidity;
     
-    if (isnan(temperature)) {
-      Serial.println(F("Error reading temperature!"));
+    if (isnan(temperature) or isnan(humidity)) {
+      Serial.println(F("Error reading sensor!"));
+      urlToPing=host + "?error";
     }
     else {
       //SENDING THE TEMPERATURE
-      urlToPing=host + "?temp=" + String(temperature);
-      Serial.print(sendGet(urlToPing));
-      Serial.println("   " + urlToPing);
+      urlToPing=host + "?temp=" + String(temperature) + "&hum=" + String(humidity);
     }
+    
+    Serial.print(sendGet(urlToPing));
+    Serial.println("   " + urlToPing);
 
-    delay(1000);
+    delay(30000);
 }
 
 int sendGet(String uri)
