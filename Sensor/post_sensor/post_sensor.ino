@@ -20,6 +20,8 @@ const char *password = "TheBestPasswordEverCreated";
 const String host = "http://192.168.43.237/data";
 
 String urlToPing="";
+double temperature=0;
+const double smoothingFactor=0.1;//x% of the new value, 1-x% of the last computed value
 
 void setup()
 {
@@ -59,12 +61,18 @@ void loop()
     //SENSOR
     sensors_event_t event;
     dht.temperature().getEvent(&event);
+    
+    Serial.print("Old " + String(temperature));
+    temperature=smoothingFactor * event.temperature + (1-smoothingFactor) * temperature;
+    Serial.print(",  New: " + String(event.temperature));
+    Serial.println(",  Result: " + String(temperature));
+    
     if (isnan(event.temperature)) {
       Serial.println(F("Error reading temperature!"));
     }
     else {
       //SENDING THE TEMPERATURE
-      urlToPing=host + "?temp=" + String(event.temperature);
+      urlToPing=host + "?temp=" + String(temperature);
       http.begin(urlToPing.c_str());
       http.addHeader("Content-Type", "text/plain");
       
@@ -73,5 +81,5 @@ void loop()
       http.end();  //Close connection
     }
 
-    delay(30000);
+    delay(1000);
 }
