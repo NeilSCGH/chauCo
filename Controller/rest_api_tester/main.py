@@ -12,19 +12,16 @@ def getParams(uri):
 
 class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        #if self.path.startswith('/temp'):
-        params=getParams(self.path)
-        print("GET", params)
+        if self.path.startswith('/data'):
+            params=getParams(self.path)
+            #print("GET", params)
+            if "temp" in params:
+                print("Temperature:", params["temp"][0])
+            else:
+                print("Invalid params")
 
-        self.send_response(200)
-        self.end_headers()
-
-    def do_POST(self):
-        params=getParams(self.path)
-        print("POST", params)
-
-        self.send_response(200)
-        self.end_headers()
+            self.send_response(200)
+            self.end_headers()
 
 print("Listening...")
 httpd = socketserver.TCPServer(("", 80), MyHandler)
